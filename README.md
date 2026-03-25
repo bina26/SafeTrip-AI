@@ -26,7 +26,7 @@ To run this project locally on your machine:
 
 ### 1. Clone the repository
 
-    git clone https://github.com/YOUR_USERNAME/SafeTrip-AI.git
+    git clone https://github.com/bina26/SafeTrip-AI.git
     cd SafeTrip-AI
 
 ### 2. Install dependencies
