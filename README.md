@@ -1,50 +1,45 @@
-# Welcome to your Expo app 👋
+# 🛡️ SafeTrip AI
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+SafeTrip AI is an intelligent, reactive personal safety and travel companion app. Designed with a focus on high-stress, low-light environments, the app combines real-time location tracking, an AI-powered chat assistant, and rapid-response emergency protocols into a single, tactical interface.
 
-## Get started
+## ✨ Features (MVP Phase)
 
-1. Install dependencies
+* **📍 Live Safety Map:** * Real-time GPS tracking utilizing native device hardware.
+  * Dynamic, proximity-based "High Risk Area" rendering.
+  * Custom-built camera controls for immediate re-centering.
+* **🚨 One-Touch SOS Protocol:** * Prominent dashboard trigger with accidental-dial prevention.
+  * Direct integration with native OS phone dialers for emergency services.
+* **🧠 AI Travel Assistant:** * Integrated conversational AI interface to act as a proactive safety companion.
+* **🌙 Tactical Dark Theme:** * Custom `#1A2232` navy UI optimized to preserve night vision and battery life during travel.
 
-   ```bash
-   npm install
-   ```
+## 🛠️ Tech Stack
 
-2. Start the app
+* **Framework:** React Native / Expo
+* **Navigation:** Expo Router (File-based routing)
+* **Mapping:** `react-native-maps` & Google Maps SDK
+* **Hardware APIs:** `expo-location`, `Linking` (Native Dialer)
+* **Build System:** Expo Application Services (EAS)
 
-   ```bash
-   npx expo start
-   ```
+## 🚀 Getting Started
 
-In the output, you'll find options to open the app in a
+To run this project locally on your machine:
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### 1. Clone the repository
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+    git clone https://github.com/bina26/SafeTrip-AI.git
+    cd SafeTrip-AI
 
-## Get a fresh project
+### 2. Install dependencies
 
-When you're ready, run:
+    npm install
 
-```bash
-npm run reset-project
-```
+### 3. API Key Configuration
+To run the map on a physical Android device, you must provide your own Google Maps API Key.
+* Add your key to `app.json` under `android.config.googleMaps.apiKey`.
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### 4. Start the development server
 
-## Learn more
+    npx expo start
 
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## 🗺️ Roadmap
+* *Upcoming features to be determined...*
