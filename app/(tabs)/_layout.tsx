@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Text } from 'react-native';
+import { Ionicons as TabBarIcon } from '@expo/vector-icons';
 
 export default function TabLayout() {
   return (
@@ -31,6 +32,15 @@ export default function TabLayout() {
           title: 'Safety Map',
           tabBarIcon: ({ color }) => (
             <Text style={{ color, fontSize: 20 }}>🗺️</Text>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="offline"
+        options={{
+          title: 'Kit',
+          tabBarIcon: ({ color }) => (
+            <TabBarIcon name="medkit" size={24} color={color} />
           ),
         }}
       />
