@@ -1,6 +1,6 @@
 import { Tabs } from "expo-router";
 import { Image } from "react-native";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 
@@ -41,6 +41,16 @@ export default function TabsLayout() {
           title: "Safety Map",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="map" size={size} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="offline"
+        options={{
+          title: "Kit",
+          tabBarIcon: ({ color }) => (
+            <Ionicons name="medkit" size={24} color={color} />
           ),
         }}
       />
