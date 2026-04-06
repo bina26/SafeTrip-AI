@@ -29,6 +29,12 @@ const COLORS = {
 
 const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-'];
 
+const validatePhone = (phone: string) => {
+  const cleanPhone = phone.replace(/\s/g, '');
+  const regex = /^\+?[1-9]\d{7,14}$/;
+  return regex.test(cleanPhone);
+};
+
 interface Slide {
   id: string;
   type: 'welcome' | 'features' | 'setup';
@@ -59,6 +65,14 @@ export default function OnboardingScreen() {
   const handleFinish = async () => {
     if (!name.trim() || !bloodGroup.trim() || !emergencyContact.trim()) {
       Alert.alert('Missing Details', 'Please fill out all fields before continuing.');
+      return;
+    }
+
+    if (!validatePhone(emergencyContact)) {
+      Alert.alert(
+        'Invalid Number',
+        'Please enter a valid number with country code e.g. +919876543210'
+      );
       return;
     }
 
@@ -158,6 +172,9 @@ export default function OnboardingScreen() {
                 value={emergencyContact}
                 onChangeText={setEmergencyContact}
               />
+              {emergencyContact.length > 0 && !validatePhone(emergencyContact) && (
+                <Text style={styles.errorText}>Valid format: +91XXXXXXXXXX</Text>
+              )}
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -360,5 +377,10 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     fontSize: 18,
     fontWeight: 'bold',
+  },
+  errorText: {
+    color: '#e63946',
+    fontSize: 12,
+    marginTop: 4,
   },
 });

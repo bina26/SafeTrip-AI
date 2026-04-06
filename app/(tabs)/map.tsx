@@ -1,9 +1,10 @@
 import * as Location from 'expo-location';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Circle, Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { getRiskZones, RiskZone } from '../../utils/ai';
 
 const { width, height } = Dimensions.get('window');
 
@@ -28,11 +29,36 @@ const DARK_MAP_STYLE = [
   { "featureType": "water", "elementType": "labels.text.stroke", "stylers": [{ "color": "#17263c" }] }
 ];
 
+function getDistanceMeters(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371000;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+function checkDangerZone(lat: number, lng: number, zones: RiskZone[]) {
+  for (const zone of zones) {
+    const dist = getDistanceMeters(lat, lng, zone.lat, zone.lng);
+    if (dist <= zone.radius && zone.risk === "high") {
+      Alert.alert(
+        "⚠️ Danger Zone Alert",
+        `You are near ${zone.title}: ${zone.description}. Please stay alert and consider moving to a safer area.`
+      );
+      return;
+    }
+  }
+}
+
 export default function MapScreen() {
   const mapRef = useRef<MapView>(null);
   const [region, setRegion] = useState<Region | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [riskZones, setRiskZones] = useState<RiskZone[]>([]);
 
   const fetchLocation = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
@@ -59,6 +85,10 @@ export default function MapScreen() {
       setRegion(newRegion);
       // If map is already loaded, animate to the new location
       mapRef.current?.animateToRegion(newRegion, 1000);
+      
+      const zones = await getRiskZones(location.coords.latitude, location.coords.longitude);
+      setRiskZones(zones);
+      checkDangerZone(location.coords.latitude, location.coords.longitude, zones);
     } catch (error) {
       console.warn('Error fetching location:', error);
       if (!region) {
@@ -111,47 +141,22 @@ export default function MapScreen() {
       >
         {region && (
           <>
-            <Circle
-              center={{
-                latitude: region.latitude + 0.015,
-                longitude: region.longitude + 0.01
-              }}
-              radius={800}
-              fillColor="rgba(231, 76, 60, 0.3)"
-              strokeColor="rgba(231, 76, 60, 0.8)"
-              strokeWidth={2}
-            />
-            <Marker
-              coordinate={{
-                latitude: region.latitude + 0.015,
-                longitude: region.longitude + 0.01
-              }}
-              title="High Risk Zone"
-              description="Increased incidents reported in this vicinity"
-            >
-              <View style={styles.markerContainer}>
-                <View style={styles.markerInner} />
-              </View>
-            </Marker>
-
-            <Circle
-              center={{
-                latitude: region.latitude - 0.02,
-                longitude: region.longitude - 0.015
-              }}
-              radius={1200}
-              fillColor="rgba(231, 76, 60, 0.3)"
-              strokeColor="rgba(231, 76, 60, 0.8)"
-              strokeWidth={2}
-            />
-            <Marker
-              coordinate={{
-                latitude: region.latitude - 0.02,
-                longitude: region.longitude - 0.015
-              }}
-              title="Risk Advisory"
-              description="Stay on well-lit main streets tonight"
-            />
+            {riskZones.map((z) => {
+              const strokeColor = z.risk === 'high' ? '#e63946' : z.risk === 'medium' ? '#ffa500' : '#2dc653';
+              const fillColor = z.risk === 'high' ? 'rgba(230,57,70,0.25)' : z.risk === 'medium' ? 'rgba(255,165,0,0.2)' : 'rgba(45,198,83,0.2)';
+              
+              return (
+                <React.Fragment key={z.id}>
+                  <Circle
+                    center={{ latitude: z.lat, longitude: z.lng }}
+                    radius={z.radius}
+                    fillColor={fillColor}
+                    strokeColor={strokeColor}
+                    strokeWidth={2}
+                  />
+                </React.Fragment>
+              );
+            })}
           </>
         )}
       </MapView>
@@ -180,6 +185,14 @@ export default function MapScreen() {
         <View style={styles.legendRow}>
           <View style={[styles.legendCircle, { backgroundColor: '#e74c3c' }]} />
           <Text style={styles.legendText}>High Risk Area</Text>
+        </View>
+        <View style={[styles.legendRow, { marginTop: 8 }]}>
+          <View style={[styles.legendCircle, { backgroundColor: '#ffa500' }]} />
+          <Text style={styles.legendText}>Medium Risk Area</Text>
+        </View>
+        <View style={[styles.legendRow, { marginTop: 8 }]}>
+          <View style={[styles.legendCircle, { backgroundColor: '#2dc653' }]} />
+          <Text style={styles.legendText}>Low Risk Area</Text>
         </View>
         <View style={[styles.legendRow, { marginTop: 8 }]}>
           <View style={[styles.legendCircle, { backgroundColor: '#3498db' }]} />

@@ -2,11 +2,13 @@ import * as Location from 'expo-location';
 import * as SMS from 'expo-sms';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useRef, useState } from 'react';
+import SafetyLogRecorder from '../../components/SafetyLogRecorder';
 import {
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Linking,
+  Modal,
   Platform,
   ScrollView,
   StyleSheet,
@@ -61,6 +63,8 @@ export default function DashboardScreen() {
   ]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [recorderVisible, setRecorderVisible] = useState(false);
+
 
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -153,6 +157,7 @@ export default function DashboardScreen() {
             <Text style={styles.headerTitle}>{profile?.name || 'Traveler'}!</Text>
           </View>
 
+
           {/* Quick Pulse Card */}
           <View style={styles.pulseCard}>
             <View style={styles.pulseHeader}>
@@ -163,6 +168,23 @@ export default function DashboardScreen() {
               Real-time safety analysis enabled. Stay alert and keep your device charged.
             </Text>
           </View>
+
+          {/* Safety Log Modal Trigger */}
+          <TouchableOpacity onPress={() => setRecorderVisible(true)} style={{ backgroundColor:'#1a0a0a', borderRadius:12, padding:14, alignItems:'center', marginTop:12, marginHorizontal:20, borderWidth:1, borderColor:'#4a1a1a', marginBottom:10 }}>
+            <Text style={{ color:'#e63946', fontSize:15, fontWeight:'600' }}>🎙 Safety Log</Text>
+          </TouchableOpacity>
+
+          <Modal visible={recorderVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setRecorderVisible(false)}>
+            <View style={{ flex:1, backgroundColor:'#0a0a0a', padding:20 }}>
+              <View style={{ flexDirection:'row', justifyContent:'space-between', marginBottom:20, paddingTop:10 }}>
+                <Text style={{ fontSize:20, fontWeight:'bold', color:'#fff' }}>Safety Log Recorder</Text>
+                <TouchableOpacity onPress={() => setRecorderVisible(false)}>
+                  <Text style={{ color:'#666', fontSize:14 }}>X Close</Text>
+                </TouchableOpacity>
+              </View>
+              <SafetyLogRecorder />
+            </View>
+          </Modal>
 
           {/* Chat Interface Scroll Area */}
           <View style={styles.chatContainer}>
