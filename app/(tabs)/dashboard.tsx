@@ -1,8 +1,8 @@
 import * as Location from 'expo-location';
+import { useRouter } from 'expo-router'; // ← Added for Fake Call navigation
 import * as SMS from 'expo-sms';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useRef, useState } from 'react';
-import SafetyLogRecorder from '../../components/SafetyLogRecorder';
 import {
   ActivityIndicator,
   Alert,
@@ -19,6 +19,7 @@ import {
 } from 'react-native';
 import Markdown from 'react-native-markdown-display';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import SafetyLogRecorder from '../../components/SafetyLogRecorder';
 import { getSafetyAdvice } from '../../utils/ai';
 import { getUserProfile, UserProfile } from '../../utils/storage';
 
@@ -28,7 +29,7 @@ const COLORS = {
   surfaceVariant: '#222831',
   text: '#ffffff',
   textSecondary: '#9a8c98',
-  accent: '#e74c3c', // Red accent for SOS
+  accent: '#e74c3c',
   primary: '#0f3460',
   secondary: '#3498db',
 };
@@ -57,14 +58,14 @@ interface Message {
 }
 
 export default function DashboardScreen() {
+  const router = useRouter(); // ← Added for Fake Call navigation
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'ai', text: 'Welcome back! I\'m your **AI Safety Advisor**. Ask me anything about your current location or general travel safety.' }
+    { role: 'ai', text: 'Welcome back! I\'m your *AI Safety Advisor*. Ask me anything about your current location or general travel safety.' }
   ]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [recorderVisible, setRecorderVisible] = useState(false);
-
 
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -82,16 +83,13 @@ export default function DashboardScreen() {
     const userMessage = inputText.trim();
     const newUserMessage: Message = { role: 'user', text: userMessage };
 
-    // Add user message to UI immediately
     setMessages(prev => [...prev, newUserMessage]);
     setInputText('');
     setIsLoading(true);
 
-    // Call Gemini AI
     const aiResponse = await getSafetyAdvice(userMessage);
     const newAiMessage: Message = { role: 'ai', text: aiResponse };
 
-    // Add AI response to UI
     setMessages(prev => [...prev, newAiMessage]);
     setIsLoading(false);
   };
@@ -105,11 +103,11 @@ export default function DashboardScreen() {
       }
 
       const location = await Location.getCurrentPositionAsync({});
-      const mapLink = `https://www.google.com/maps/search/?api=1&query=${location.coords.latitude},${location.coords.longitude}`;
+      const mapLink = https://www.google.com/maps/search/?api=1&query=${location.coords.latitude},${location.coords.longitude};
 
       const isAvailable = await SMS.isAvailableAsync();
       if (isAvailable) {
-        await SMS.sendSMSAsync([], `EMERGENCY! I need help. My current location is: ${mapLink}`);
+        await SMS.sendSMSAsync([], EMERGENCY! I need help. My current location is: ${mapLink});
       } else {
         Alert.alert("Error", "SMS services are not available on this device.");
       }
@@ -157,7 +155,6 @@ export default function DashboardScreen() {
             <Text style={styles.headerTitle}>{profile?.name || 'Traveler'}!</Text>
           </View>
 
-
           {/* Quick Pulse Card */}
           <View style={styles.pulseCard}>
             <View style={styles.pulseHeader}>
@@ -170,16 +167,25 @@ export default function DashboardScreen() {
           </View>
 
           {/* Safety Log Modal Trigger */}
-          <TouchableOpacity onPress={() => setRecorderVisible(true)} style={{ backgroundColor:'#1a0a0a', borderRadius:12, padding:14, alignItems:'center', marginTop:12, marginHorizontal:20, borderWidth:1, borderColor:'#4a1a1a', marginBottom:10 }}>
-            <Text style={{ color:'#e63946', fontSize:15, fontWeight:'600' }}>🎙 Safety Log</Text>
+          <TouchableOpacity onPress={() => setRecorderVisible(true)} style={{ backgroundColor: '#1a0a0a', borderRadius: 12, padding: 14, alignItems: 'center', marginTop: 12, marginHorizontal: 20, borderWidth: 1, borderColor: '#4a1a1a', marginBottom: 6 }}>
+            <Text style={{ color: '#e63946', fontSize: 15, fontWeight: '600' }}>🎙 Safety Log</Text>
           </TouchableOpacity>
 
+          {/* ─── Fake Call Button (only addition) ─── */}
+          <TouchableOpacity
+            onPress={() => router.push('/fake-call')}
+            style={{ backgroundColor: '#1a0a1a', borderRadius: 12, padding: 14, alignItems: 'center', marginHorizontal: 20, borderWidth: 1, borderColor: '#4a1a4a', marginBottom: 10 }}
+          >
+            <Text style={{ color: '#FF8C00', fontSize: 15, fontWeight: '600' }}>📞 Fake Call / Escape Mode</Text>
+          </TouchableOpacity>
+          {/* ─────────────────────────────────────── */}
+
           <Modal visible={recorderVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setRecorderVisible(false)}>
-            <View style={{ flex:1, backgroundColor:'#0a0a0a', padding:20 }}>
-              <View style={{ flexDirection:'row', justifyContent:'space-between', marginBottom:20, paddingTop:10 }}>
-                <Text style={{ fontSize:20, fontWeight:'bold', color:'#fff' }}>Safety Log Recorder</Text>
+            <View style={{ flex: 1, backgroundColor: '#0a0a0a', padding: 20 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20, paddingTop: 10 }}>
+                <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#fff' }}>Safety Log Recorder</Text>
                 <TouchableOpacity onPress={() => setRecorderVisible(false)}>
-                  <Text style={{ color:'#666', fontSize:14 }}>X Close</Text>
+                  <Text style={{ color: '#666', fontSize: 14 }}>X Close</Text>
                 </TouchableOpacity>
               </View>
               <SafetyLogRecorder />
@@ -244,7 +250,7 @@ export default function DashboardScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* SOS Action - Now docked inside the bar */}
+            {/* SOS — unchanged */}
             <TouchableOpacity
               style={styles.sosButton}
               onPress={handleSOSPress}
@@ -375,7 +381,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderTopWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
-    paddingBottom: Platform.OS === 'ios' ? 25 : 8, // More padding for iOS home indicator, minimal for Android
+    paddingBottom: Platform.OS === 'ios' ? 25 : 8,
   },
   inputContainer: {
     flex: 1,

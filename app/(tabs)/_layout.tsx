@@ -1,47 +1,77 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
-import { Text } from 'react-native';
-import { Ionicons as TabBarIcon } from '@expo/vector-icons';
+import { Tabs } from "expo-router";
+import { Image } from "react-native";
+import React, { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { Ionicons } from "@expo/vector-icons";
 
-export default function TabLayout() {
+export default function TabsLayout() {
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadImage();
+  }, []);
+
+  const loadImage = async () => {
+    try {
+      const data = await AsyncStorage.getItem("profile");
+      if (data) {
+        const parsed = JSON.parse(data);
+        setProfileImage(parsed.image || null);
+      }
+    } catch (e) {
+      console.log("Error loading image:", e);
+    }
+  };
+
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarStyle: {
-          backgroundColor: '#1a1a2e',
-          borderTopWidth: 1,
-          borderTopColor: 'rgba(255, 255, 255, 0.1)',
-        },
-        tabBarActiveTintColor: '#e74c3c',
-        tabBarInactiveTintColor: '#9a8c98',
-      }}
-    >
+    <Tabs>
       <Tabs.Screen
         name="dashboard"
         options={{
-          title: 'Dashboard',
-          tabBarIcon: ({ color }) => (
-            <Text style={{ color, fontSize: 20 }}>🛡️</Text>
+          title: "Dashboard",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="home" size={size} color={color} />
           ),
         }}
       />
+
       <Tabs.Screen
         name="map"
         options={{
-          title: 'Safety Map',
-          tabBarIcon: ({ color }) => (
-            <Text style={{ color, fontSize: 20 }}>🗺️</Text>
+          title: "Safety Map",
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="map" size={size} color={color} />
           ),
         }}
       />
+
       <Tabs.Screen
         name="offline"
         options={{
-          title: 'Kit',
+          title: "Kit",
           tabBarIcon: ({ color }) => (
-            <TabBarIcon name="medkit" size={24} color={color} />
+            <Ionicons name="medkit" size={24} color={color} />
           ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Profile",
+          tabBarIcon: ({ size }) =>
+            profileImage ? (
+              <Image
+                source={{ uri: profileImage }}
+                style={{
+                  width: size,
+                  height: size,
+                  borderRadius: size / 2,
+                }}
+              />
+            ) : (
+              <Ionicons name="person-circle" size={size} color="#ccc" />
+            ),
         }}
       />
     </Tabs>
