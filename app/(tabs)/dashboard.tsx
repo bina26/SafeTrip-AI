@@ -1,8 +1,8 @@
 import * as Location from 'expo-location';
+import { useRouter } from 'expo-router'; // ← Added for Fake Call navigation
 import * as SMS from 'expo-sms';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useRef, useState } from 'react';
-import SafetyLogRecorder from '../../components/SafetyLogRecorder';
 import {
   ActivityIndicator,
   Alert,
@@ -17,7 +17,11 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import Markdown from 'react-native-markdown-display';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import SafetyLogRecorder from '../../components/SafetyLogRecorder';
+import { getSafetyAdvice } from '../../utils/ai';
+import { getUserProfile, UserProfile } from '../../utils/storage';
 
 const COLORS = {
   background: '#1a1a2e',
@@ -25,7 +29,7 @@ const COLORS = {
   surfaceVariant: '#222831',
   text: '#ffffff',
   textSecondary: '#9a8c98',
-  accent: '#e74c3c', // Red accent for SOS
+  accent: '#e74c3c',
   primary: '#0f3460',
   secondary: '#3498db',
 };
@@ -54,10 +58,10 @@ interface Message {
 }
 
 export default function DashboardScreen() {
-  const router = useRouter();
+  const router = useRouter(); // ← Added for Fake Call navigation
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'ai', text: 'Welcome back! I\'m your **AI Safety Advisor**. Ask me anything about your current location or general travel safety.' }
+    { role: 'ai', text: 'Welcome back! I\'m your *AI Safety Advisor*. Ask me anything about your current location or general travel safety.' }
   ]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -79,16 +83,13 @@ export default function DashboardScreen() {
     const userMessage = inputText.trim();
     const newUserMessage: Message = { role: 'user', text: userMessage };
 
-    // Add user message to UI immediately
     setMessages(prev => [...prev, newUserMessage]);
     setInputText('');
     setIsLoading(true);
 
-    // Call Gemini AI
     const aiResponse = await getSafetyAdvice(userMessage);
     const newAiMessage: Message = { role: 'ai', text: aiResponse };
 
-    // Add AI response to UI
     setMessages(prev => [...prev, newAiMessage]);
     setIsLoading(false);
   };
@@ -102,11 +103,11 @@ export default function DashboardScreen() {
       }
 
       const location = await Location.getCurrentPositionAsync({});
-      const mapLink = `https://www.google.com/maps/search/?api=1&query=${location.coords.latitude},${location.coords.longitude}`;
+      const mapLink = https://www.google.com/maps/search/?api=1&query=${location.coords.latitude},${location.coords.longitude};
 
       const isAvailable = await SMS.isAvailableAsync();
       if (isAvailable) {
-        await SMS.sendSMSAsync([], `EMERGENCY! I need help. My current location is: ${mapLink}`);
+        await SMS.sendSMSAsync([], EMERGENCY! I need help. My current location is: ${mapLink});
       } else {
         Alert.alert("Error", "SMS services are not available on this device.");
       }
@@ -139,279 +140,299 @@ export default function DashboardScreen() {
   };
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>SafeTrip AI</Text>
+    <SafeAreaView style={styles.outerContainer}>
+      <StatusBar style="light" />
 
-      {/* Welcome Section */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Welcome 👋</Text>
-        <Text style={styles.cardText}>
-          Stay safe while traveling. Use the tools below when needed.
-        </Text>
-      </View>
-
-      {/* Fake Call Button */}
-      <TouchableOpacity
-        style={styles.fakeCallBtn}
-        onPress={() => router.push("/fake-call")}
+      <KeyboardAvoidingView
+        style={styles.keyboardContainer}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
-        <Text style={styles.btnText}>📞 Fake Call / Escape Mode</Text>
-      </TouchableOpacity>
+        <View style={styles.contentWrapper}>
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.headerSubtitle}>Safe Travels,</Text>
+            <Text style={styles.headerTitle}>{profile?.name || 'Traveler'}!</Text>
+          </View>
 
-      {/* Quick Pulse Card */}
-      <View style={styles.pulseCard}>
-        <View style={styles.pulseHeader}>
-          <Text style={styles.pulseLabel}>📍 Location: Active Tracking</Text>
-          <View style={styles.pulseDot} />
-        </View>
-        <Text style={styles.pulseStatus}>
-          Real-time safety analysis enabled. Stay alert and keep your device charged.
-        </Text>
-      </View>
+          {/* Quick Pulse Card */}
+          <View style={styles.pulseCard}>
+            <View style={styles.pulseHeader}>
+              <Text style={styles.pulseLabel}>📍 Location: Active Tracking</Text>
+              <View style={styles.pulseDot} />
+            </View>
+            <Text style={styles.pulseStatus}>
+              Real-time safety analysis enabled. Stay alert and keep your device charged.
+            </Text>
+          </View>
 
-      {/* Safety Log Modal Trigger */}
-      <TouchableOpacity onPress={() => setRecorderVisible(true)} style={{ backgroundColor:'#1a0a0a', borderRadius:12, padding:14, alignItems:'center', marginTop:12, marginHorizontal:20, borderWidth:1, borderColor:'#4a1a1a', marginBottom:10 }}>
-        <Text style={{ color:'#e63946', fontSize:15, fontWeight:'600' }}>🎙 Safety Log</Text>
-      </TouchableOpacity>
+          {/* Safety Log Modal Trigger */}
+          <TouchableOpacity onPress={() => setRecorderVisible(true)} style={{ backgroundColor: '#1a0a0a', borderRadius: 12, padding: 14, alignItems: 'center', marginTop: 12, marginHorizontal: 20, borderWidth: 1, borderColor: '#4a1a1a', marginBottom: 6 }}>
+            <Text style={{ color: '#e63946', fontSize: 15, fontWeight: '600' }}>🎙 Safety Log</Text>
+          </TouchableOpacity>
 
-      <Modal visible={recorderVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setRecorderVisible(false)}>
-        <View style={{ flex:1, backgroundColor:'#0a0a0a', padding:20 }}>
-          <View style={{ flexDirection:'row', justifyContent:'space-between', marginBottom:20, paddingTop:10 }}>
-            <Text style={{ fontSize:20, fontWeight:'bold', color:'#fff' }}>Safety Log Recorder</Text>
-            <TouchableOpacity onPress={() => setRecorderVisible(false)}>
-              <Text style={{ color:'#666', fontSize:14 }}>X Close</Text>
+          {/* ─── Fake Call Button (only addition) ─── */}
+          <TouchableOpacity
+            onPress={() => router.push('/fake-call')}
+            style={{ backgroundColor: '#1a0a1a', borderRadius: 12, padding: 14, alignItems: 'center', marginHorizontal: 20, borderWidth: 1, borderColor: '#4a1a4a', marginBottom: 10 }}
+          >
+            <Text style={{ color: '#FF8C00', fontSize: 15, fontWeight: '600' }}>📞 Fake Call / Escape Mode</Text>
+          </TouchableOpacity>
+          {/* ─────────────────────────────────────── */}
+
+          <Modal visible={recorderVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setRecorderVisible(false)}>
+            <View style={{ flex: 1, backgroundColor: '#0a0a0a', padding: 20 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20, paddingTop: 10 }}>
+                <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#fff' }}>Safety Log Recorder</Text>
+                <TouchableOpacity onPress={() => setRecorderVisible(false)}>
+                  <Text style={{ color: '#666', fontSize: 14 }}>X Close</Text>
+                </TouchableOpacity>
+              </View>
+              <SafetyLogRecorder />
+            </View>
+          </Modal>
+
+          {/* Chat Interface Scroll Area */}
+          <View style={styles.chatContainer}>
+            <Text style={styles.advisorTitle}>AI Safety Advisor</Text>
+            <ScrollView
+              ref={scrollViewRef}
+              style={styles.chatArea}
+              contentContainerStyle={styles.chatScrollContent}
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+            >
+              {messages.map((message, index) => (
+                <View
+                  key={index.toString()}
+                  style={[
+                    styles.bubble,
+                    message.role === 'ai' ? styles.aiBubble : styles.userBubble
+                  ]}
+                >
+                  {message.role === 'ai' ? (
+                    <Markdown style={markdownStyles}>
+                      {message.text}
+                    </Markdown>
+                  ) : (
+                    <Text style={styles.bubbleText}>{message.text}</Text>
+                  )}
+                </View>
+              ))}
+
+              {isLoading && (
+                <View style={[styles.bubble, styles.aiBubble, styles.loadingBubble]}>
+                  <ActivityIndicator color={COLORS.text} size="small" />
+                  <Text style={[styles.bubbleText, { marginLeft: 10 }]}>Advisor is thinking...</Text>
+                </View>
+              )}
+            </ScrollView>
+          </View>
+
+          {/* Docked Chat Bar */}
+          <View style={styles.bottomInputArea}>
+            <View style={styles.inputContainer}>
+              <TextInput
+                style={styles.input}
+                placeholder="Ask AI Advisor anything..."
+                placeholderTextColor={COLORS.textSecondary}
+                value={inputText}
+                onChangeText={setInputText}
+                editable={!isLoading}
+              />
+              <TouchableOpacity
+                style={[styles.sendButton, (!inputText.trim() || isLoading) && styles.sendButtonDisabled]}
+                onPress={handleSend}
+                disabled={!inputText.trim() || isLoading}
+              >
+                <Text style={styles.sendIcon}>➔</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* SOS — unchanged */}
+            <TouchableOpacity
+              style={styles.sosButton}
+              onPress={handleSOSPress}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.sosText}>SOS</Text>
             </TouchableOpacity>
           </View>
-          <SafetyLogRecorder />
         </View>
-      </Modal>
-
-      {/* Chat Interface Scroll Area */}
-      <View style={styles.chatContainer}>
-        <Text style={styles.advisorTitle}>AI Safety Advisor</Text>
-        <ScrollView
-          ref={scrollViewRef}
-          style={styles.chatArea}
-          contentContainerStyle={styles.chatScrollContent}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-          onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
-        >
-          {messages.map((message, index) => (
-            <View
-              key={index.toString()}
-              style={[
-                styles.bubble,
-                message.role === 'ai' ? styles.aiBubble : styles.userBubble
-              ]}
-            >
-              {message.role === 'ai' ? (
-                <Markdown style={markdownStyles}>
-                  {message.text}
-                </Markdown>
-              ) : (
-                <Text style={styles.bubbleText}>{message.text}</Text>
-              )}
-            </View>
-          ))}
-
-          {isLoading && (
-            <View style={[styles.bubble, styles.aiBubble, styles.loadingBubble]}>
-              <ActivityIndicator color={COLORS.text} size="small" />
-              <Text style={[styles.bubbleText, { marginLeft: 10 }]}>Advisor is thinking...</Text>
-            </View>
-          )}
-        </ScrollView>
-      </View>
-
-      {/* Docked Chat Bar */}
-      <View style={styles.bottomInputArea}>
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.input}
-            placeholder="Ask AI Advisor anything..."
-            placeholderTextColor={COLORS.textSecondary}
-            value={inputText}
-            onChangeText={setInputText}
-            editable={!isLoading}
-          />
-          <TouchableOpacity
-            style={[styles.sendButton, (!inputText.trim() || isLoading) && styles.sendButtonDisabled]}
-            onPress={handleSend}
-            disabled={!inputText.trim() || isLoading}
-          >
-            <Text style={styles.sendIcon}>➔</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* SOS Action - Now docked inside the bar */}
-        <TouchableOpacity
-          style={styles.sosButton}
-          onPress={handleSOSPress}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.sosText}>SOS</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  outerContainer: {
     flex: 1,
-    backgroundColor: "#0A192F",
-    padding: 20,
+    backgroundColor: COLORS.background,
   },
-  title: {
-    fontSize: 28,
-    color: "#fff",
-    fontWeight: "bold",
-    marginBottom: 20,
+  keyboardContainer: {
+    flex: 1,
   },
-  card: {
-    backgroundColor: "#112240",
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 20,
+  contentWrapper: {
+    flex: 1,
   },
-  cardTitle: {
-    color: "#fff",
-    fontSize: 18,
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 10,
     marginBottom: 5,
   },
-  cardText: {
-    color: "#aaa",
+  headerSubtitle: {
+    color: COLORS.textSecondary,
+    fontSize: 16,
+    fontWeight: '500',
   },
-  fakeCallBtn: {
-    backgroundColor: "#FF8C00",
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 15,
-    alignItems: "center",
-  },
-  btnText: {
-    color: "#fff",
-    fontWeight: "bold",
+  headerTitle: {
+    color: COLORS.text,
+    fontSize: 32,
+    fontWeight: 'bold',
   },
   pulseCard: {
-    backgroundColor: '#16213e',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
+    backgroundColor: COLORS.surface,
     marginHorizontal: 20,
+    padding: 15,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#0f3460',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    marginBottom: 10,
   },
   pulseHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    justifyContent: 'space-between',
+    marginBottom: 5,
   },
   pulseLabel: {
-    color: '#ffffff',
+    color: COLORS.text,
     fontSize: 14,
     fontWeight: '600',
   },
   pulseDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: '#2ecc71',
   },
   pulseStatus: {
-    color: '#9a8c98',
-    fontSize: 13,
+    color: COLORS.textSecondary,
+    fontSize: 12,
+    lineHeight: 18,
   },
   chatContainer: {
     flex: 1,
     marginHorizontal: 20,
-    marginTop: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    borderRadius: 24,
+    padding: 15,
+    marginBottom: 5,
   },
   advisorTitle: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 10,
+    color: COLORS.text,
+    fontSize: 10,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    letterSpacing: 2,
+    marginBottom: 15,
+    textAlign: 'center',
+    opacity: 0.4,
   },
   chatArea: {
     flex: 1,
-    maxHeight: 300,
   },
   chatScrollContent: {
-    paddingBottom: 12,
+    flexGrow: 1,
+    paddingBottom: 10,
   },
   bubble: {
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
     maxWidth: '85%',
+    padding: 12,
+    borderRadius: 18,
+    marginBottom: 12,
   },
   aiBubble: {
-    backgroundColor: '#16213e',
+    backgroundColor: COLORS.surfaceVariant,
     alignSelf: 'flex-start',
+    borderBottomLeftRadius: 4,
   },
   userBubble: {
-    backgroundColor: '#0f3460',
+    backgroundColor: COLORS.secondary,
     alignSelf: 'flex-end',
+    borderBottomRightRadius: 4,
   },
   loadingBubble: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   bubbleText: {
-    color: '#ffffff',
-    fontSize: 15,
+    color: COLORS.text,
+    fontSize: 14,
+    lineHeight: 20,
   },
   bottomInputArea: {
+    width: '100%',
+    backgroundColor: COLORS.background,
     flexDirection: 'row',
     alignItems: 'center',
-    marginHorizontal: 20,
-    marginTop: 12,
-    marginBottom: 20,
-    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    paddingBottom: Platform.OS === 'ios' ? 25 : 8,
   },
   inputContainer: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#16213e',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#0f3460',
+    backgroundColor: COLORS.surface,
     paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   input: {
     flex: 1,
-    color: '#ffffff',
-    fontSize: 15,
-    paddingVertical: 12,
+    color: COLORS.text,
+    marginRight: 8,
+    height: 40,
   },
   sendButton: {
-    backgroundColor: '#3498db',
-    borderRadius: 8,
-    padding: 8,
-    marginLeft: 8,
+    width: 32,
+    height: 32,
+    backgroundColor: COLORS.secondary,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   sendButtonDisabled: {
-    backgroundColor: '#1a1a2e',
+    opacity: 0.5,
   },
   sendIcon: {
-    color: '#ffffff',
-    fontSize: 16,
+    color: COLORS.text,
+    fontSize: 14,
+    fontWeight: 'bold',
   },
   sosButton: {
-    backgroundColor: '#e74c3c',
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 18,
-    alignItems: 'center',
+    width: 48,
+    height: 48,
+    backgroundColor: COLORS.accent,
+    borderRadius: 24,
+    marginLeft: 12,
     justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 5,
+    shadowColor: COLORS.accent,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
   },
   sosText: {
-    color: '#ffffff',
+    color: COLORS.text,
     fontWeight: 'bold',
-    fontSize: 14,
+    fontSize: 12,
   },
 });
