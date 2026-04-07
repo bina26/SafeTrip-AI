@@ -1,11 +1,12 @@
+import { useRouter } from 'expo-router';
 import * as Location from 'expo-location';
-import { useRouter } from 'expo-router'; // ← Added for Fake Call navigation
 import * as SMS from 'expo-sms';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
+  Dimensions,
   KeyboardAvoidingView,
   Linking,
   Modal,
@@ -23,13 +24,15 @@ import SafetyLogRecorder from '../../components/SafetyLogRecorder';
 import { getSafetyAdvice } from '../../utils/ai';
 import { getUserProfile, UserProfile } from '../../utils/storage';
 
+const { width, height } = Dimensions.get('window');
+
 const COLORS = {
   background: '#1a1a2e',
   surface: '#16213e',
   surfaceVariant: '#222831',
   text: '#ffffff',
   textSecondary: '#9a8c98',
-  accent: '#e74c3c',
+  accent: '#e74c3c', // Red accent for SOS
   primary: '#0f3460',
   secondary: '#3498db',
 };
@@ -37,7 +40,7 @@ const COLORS = {
 const markdownStyles = {
   body: {
     color: '#ffffff',
-    fontSize: 16,
+    fontSize: Math.round(16 * width / 390),
   },
   paragraph: {
     marginTop: 0,
@@ -58,14 +61,15 @@ interface Message {
 }
 
 export default function DashboardScreen() {
-  const router = useRouter(); // ← Added for Fake Call navigation
+  const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'ai', text: 'Welcome back! I\'m your *AI Safety Advisor*. Ask me anything about your current location or general travel safety.' }
+    { role: 'ai', text: 'Welcome back! I\'m your **AI Safety Advisor**. Ask me anything about your current location or general travel safety.' }
   ]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [recorderVisible, setRecorderVisible] = useState(false);
+
 
   const scrollViewRef = useRef<ScrollView>(null);
 
@@ -83,13 +87,16 @@ export default function DashboardScreen() {
     const userMessage = inputText.trim();
     const newUserMessage: Message = { role: 'user', text: userMessage };
 
+    // Add user message to UI immediately
     setMessages(prev => [...prev, newUserMessage]);
     setInputText('');
     setIsLoading(true);
 
+    // Call Gemini AI
     const aiResponse = await getSafetyAdvice(userMessage);
     const newAiMessage: Message = { role: 'ai', text: aiResponse };
 
+    // Add AI response to UI
     setMessages(prev => [...prev, newAiMessage]);
     setIsLoading(false);
   };
@@ -103,11 +110,11 @@ export default function DashboardScreen() {
       }
 
       const location = await Location.getCurrentPositionAsync({});
-      const mapLink = https://www.google.com/maps/search/?api=1&query=${location.coords.latitude},${location.coords.longitude};
+      const mapLink = `https://www.google.com/maps/search/?api=1&query=${location.coords.latitude},${location.coords.longitude}`;
 
       const isAvailable = await SMS.isAvailableAsync();
       if (isAvailable) {
-        await SMS.sendSMSAsync([], EMERGENCY! I need help. My current location is: ${mapLink});
+        await SMS.sendSMSAsync([], `EMERGENCY! I need help. My current location is: ${mapLink}`);
       } else {
         Alert.alert("Error", "SMS services are not available on this device.");
       }
@@ -145,8 +152,8 @@ export default function DashboardScreen() {
 
       <KeyboardAvoidingView
         style={styles.keyboardContainer}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
+        behavior="padding"
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 80}
       >
         <View style={styles.contentWrapper}>
           {/* Header */}
@@ -154,6 +161,7 @@ export default function DashboardScreen() {
             <Text style={styles.headerSubtitle}>Safe Travels,</Text>
             <Text style={styles.headerTitle}>{profile?.name || 'Traveler'}!</Text>
           </View>
+
 
           {/* Quick Pulse Card */}
           <View style={styles.pulseCard}>
@@ -167,30 +175,38 @@ export default function DashboardScreen() {
           </View>
 
           {/* Safety Log Modal Trigger */}
-          <TouchableOpacity onPress={() => setRecorderVisible(true)} style={{ backgroundColor: '#1a0a0a', borderRadius: 12, padding: 14, alignItems: 'center', marginTop: 12, marginHorizontal: 20, borderWidth: 1, borderColor: '#4a1a1a', marginBottom: 6 }}>
-            <Text style={{ color: '#e63946', fontSize: 15, fontWeight: '600' }}>🎙 Safety Log</Text>
+          <TouchableOpacity onPress={() => setRecorderVisible(true)} style={{ backgroundColor: '#1a0a0a', borderRadius: 12, padding: 14, alignItems: 'center', marginTop: 12, marginHorizontal: width * 0.05, borderWidth: 1, borderColor: '#4a1a1a', marginBottom: 6 }}>
+            <Text style={{ color: '#e63946', fontSize: Math.round(15 * width / 390), fontWeight: '600' }}>🎙 Safety Log</Text>
           </TouchableOpacity>
-
-          {/* ─── Fake Call Button (only addition) ─── */}
-          <TouchableOpacity
-            onPress={() => router.push('/fake-call')}
-            style={{ backgroundColor: '#1a0a1a', borderRadius: 12, padding: 14, alignItems: 'center', marginHorizontal: 20, borderWidth: 1, borderColor: '#4a1a4a', marginBottom: 10 }}
-          >
-            <Text style={{ color: '#FF8C00', fontSize: 15, fontWeight: '600' }}>📞 Fake Call / Escape Mode</Text>
-          </TouchableOpacity>
-          {/* ─────────────────────────────────────── */}
 
           <Modal visible={recorderVisible} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setRecorderVisible(false)}>
-            <View style={{ flex: 1, backgroundColor: '#0a0a0a', padding: 20 }}>
+            <View style={{ flex: 1, backgroundColor: '#0a0a0a', padding: width * 0.05 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20, paddingTop: 10 }}>
-                <Text style={{ fontSize: 20, fontWeight: 'bold', color: '#fff' }}>Safety Log Recorder</Text>
+                <Text style={{ fontSize: Math.round(20 * width / 390), fontWeight: 'bold', color: '#fff' }}>Safety Log Recorder</Text>
                 <TouchableOpacity onPress={() => setRecorderVisible(false)}>
-                  <Text style={{ color: '#666', fontSize: 14 }}>X Close</Text>
+                  <Text style={{ color: '#666', fontSize: Math.round(14 * width / 390) }}>X Close</Text>
                 </TouchableOpacity>
               </View>
               <SafetyLogRecorder />
             </View>
           </Modal>
+
+          <TouchableOpacity 
+            onPress={() => router.push('/fake-call')} 
+            style={{ 
+              backgroundColor: '#0a1a0a', 
+              borderRadius: 12, 
+              padding: 14, 
+              alignItems: 'center', 
+              marginTop: 8, 
+              marginHorizontal: width * 0.05, 
+              borderWidth: 1, 
+              borderColor: '#1a4a1a', 
+              marginBottom: 6 
+            }}
+          >
+            <Text style={{ color: '#FF8C00', fontSize: Math.round(15 * width / 390), fontWeight: '600' }}>📞 Fake Call</Text>
+          </TouchableOpacity>
 
           {/* Chat Interface Scroll Area */}
           <View style={styles.chatContainer}>
@@ -250,7 +266,7 @@ export default function DashboardScreen() {
               </TouchableOpacity>
             </View>
 
-            {/* SOS — unchanged */}
+            {/* SOS Action - Now docked inside the bar */}
             <TouchableOpacity
               style={styles.sosButton}
               onPress={handleSOSPress}
@@ -277,28 +293,28 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 10,
+    paddingHorizontal: width * 0.05,
+    paddingTop: 4,
     marginBottom: 5,
   },
   headerSubtitle: {
     color: COLORS.textSecondary,
-    fontSize: 16,
+    fontSize: Math.round(16 * width / 390),
     fontWeight: '500',
   },
   headerTitle: {
     color: COLORS.text,
-    fontSize: 32,
+    fontSize: Math.round(32 * width / 390),
     fontWeight: 'bold',
   },
   pulseCard: {
     backgroundColor: COLORS.surface,
-    marginHorizontal: 20,
+    marginHorizontal: width * 0.05,
     padding: 15,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
-    marginBottom: 10,
+    marginBottom: 6,
   },
   pulseHeader: {
     flexDirection: 'row',
@@ -308,7 +324,7 @@ const styles = StyleSheet.create({
   },
   pulseLabel: {
     color: COLORS.text,
-    fontSize: 14,
+    fontSize: Math.round(14 * width / 390),
     fontWeight: '600',
   },
   pulseDot: {
@@ -319,12 +335,12 @@ const styles = StyleSheet.create({
   },
   pulseStatus: {
     color: COLORS.textSecondary,
-    fontSize: 12,
+    fontSize: Math.round(12 * width / 390),
     lineHeight: 18,
   },
   chatContainer: {
     flex: 1,
-    marginHorizontal: 20,
+    marginHorizontal: width * 0.05,
     backgroundColor: 'rgba(255, 255, 255, 0.03)',
     borderRadius: 24,
     padding: 15,
@@ -332,7 +348,7 @@ const styles = StyleSheet.create({
   },
   advisorTitle: {
     color: COLORS.text,
-    fontSize: 10,
+    fontSize: Math.round(10 * width / 390),
     fontWeight: 'bold',
     textTransform: 'uppercase',
     letterSpacing: 2,
@@ -369,7 +385,7 @@ const styles = StyleSheet.create({
   },
   bubbleText: {
     color: COLORS.text,
-    fontSize: 14,
+    fontSize: Math.round(14 * width / 390),
     lineHeight: 20,
   },
   bottomInputArea: {
@@ -381,7 +397,7 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderTopWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
-    paddingBottom: Platform.OS === 'ios' ? 25 : 8,
+    paddingBottom: Platform.OS === 'ios' ? 25 : 8, // More padding for iOS home indicator, minimal for Android
   },
   inputContainer: {
     flex: 1,
@@ -413,7 +429,7 @@ const styles = StyleSheet.create({
   },
   sendIcon: {
     color: COLORS.text,
-    fontSize: 14,
+    fontSize: Math.round(14 * width / 390),
     fontWeight: 'bold',
   },
   sosButton: {
@@ -433,6 +449,6 @@ const styles = StyleSheet.create({
   sosText: {
     color: COLORS.text,
     fontWeight: 'bold',
-    fontSize: 12,
+    fontSize: Math.round(12 * width / 390),
   },
 });

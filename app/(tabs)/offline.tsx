@@ -7,7 +7,8 @@ import {
   TouchableOpacity, 
   SafeAreaView, 
   StatusBar, 
-  Platform 
+  Platform,
+  Linking
 } from 'react-native';
 
 const emergencyNumbers = [
@@ -54,7 +55,15 @@ export default function OfflineScreen() {
           <View key={index} style={styles.card}>
             <Text style={styles.cardTitle}>{item.country}</Text>
             <View style={styles.cardValueContainer}>
-              <Text style={styles.cardValue}>{item.numbers}</Text>
+              {item.numbers.split(', ').map((num, idx) => (
+                <TouchableOpacity 
+                  key={idx} 
+                  style={styles.numberButton}
+                  onPress={() => Linking.openURL(`tel:${num}`)}
+                >
+                  <Text style={styles.cardValue}>{num}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
           </View>
         ));
@@ -185,6 +194,16 @@ const styles = StyleSheet.create({
   },
   cardValueContainer: {
     marginTop: 4,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  numberButton: {
+    borderWidth: 1,
+    borderColor: '#e63946',
+    borderRadius: 8,
+    padding: 6,
+    marginRight: 10,
+    marginBottom: 6,
   },
   cardValue: {
     color: '#F05A53',

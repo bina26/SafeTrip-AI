@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
+import { getUserProfile, saveUserProfile } from "../../utils/storage";
 
 export default function ProfileScreen() {
   const [name, setName] = useState("");
@@ -24,13 +25,25 @@ export default function ProfileScreen() {
 
   const loadData = async () => {
     try {
-      const data = await AsyncStorage.getItem("profile");
-      if (data) {
-        const parsed = JSON.parse(data);
-        setName(parsed.name || "");
-        setBloodGroup(parsed.bloodGroup || "");
-        setContacts(parsed.contacts || [""]);
+      // Load core fields from the shared onboarding key
+      const coreProfile = await getUserProfile();
+      if (coreProfile) {
+        setName(coreProfile.name || "");
+        setBloodGroup(coreProfile.bloodGroup || "");
+        // Seed the first contact slot from onboarding's emergencyContact
+        if (coreProfile.emergencyContact) {
+          setContacts([coreProfile.emergencyContact]);
+        }
+      }
+      // Also load photo and any extra contacts stored by profile screen
+      const extra = await AsyncStorage.getItem("profile");
+      if (extra) {
+        const parsed = JSON.parse(extra);
         setImage(parsed.image || null);
+        // Only override contacts if profile screen has richer data
+        if (parsed.contacts && parsed.contacts.length > 0) {
+          setContacts(parsed.contacts);
+        }
       }
     } catch (e) {
       console.log("Load error:", e);
@@ -39,9 +52,22 @@ export default function ProfileScreen() {
 
   const saveData = async () => {
     try {
-      const profile = { name, bloodGroup, contacts, image };
-      await AsyncStorage.setItem("profile", JSON.stringify(profile));
-      Alert.alert("Success", "Profile Saved!");
+      // Save core fields via shared storage utility (syncs with dashboard & onboarding)
+      const success = await saveUserProfile({
+        name,
+        bloodGroup,
+        emergencyContact: contacts[0] || "",
+      });
+      // Save photo and full contacts list under the profile key
+      await AsyncStorage.setItem(
+        "profile",
+        JSON.stringify({ name, bloodGroup, contacts, image })
+      );
+      if (success) {
+        Alert.alert("Success", "Profile saved!");
+      } else {
+        Alert.alert("Error", "Failed to save profile. Please try again.");
+      }
     } catch (e) {
       console.log("Save error:", e);
     }

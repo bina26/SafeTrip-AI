@@ -28,6 +28,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="dashboard"
         options={{
+          headerShown: false,
           title: "Dashboard",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" size={size} color={color} />
@@ -38,6 +39,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="map"
         options={{
+          headerShown: false,
           title: "Safety Map",
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="map" size={size} color={color} />
@@ -48,6 +50,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="offline"
         options={{
+          headerShown: false,
           title: "Kit",
           tabBarIcon: ({ color }) => (
             <Ionicons name="medkit" size={24} color={color} />
@@ -58,6 +61,7 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="profile"
         options={{
+          headerShown: false,
           title: "Profile",
           tabBarIcon: ({ size }) =>
             profileImage ? (
