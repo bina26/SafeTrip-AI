@@ -61,7 +61,7 @@ export default function DashboardScreen() {
   const router = useRouter(); // ← Added for Fake Call navigation
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'ai', text: 'Welcome back! I\'m your **AI Safety Advisor**. Ask me anything about your current location or general travel safety.' }
+    { role: 'ai', text: 'Welcome back! I\'m your *AI Safety Advisor*. Ask me anything about your current location or general travel safety.' }
   ]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -103,11 +103,11 @@ export default function DashboardScreen() {
       }
 
       const location = await Location.getCurrentPositionAsync({});
-      const mapLink = `https://www.google.com/maps/search/?api=1&query=${location.coords.latitude},${location.coords.longitude}`;
+      const mapLink = https://www.google.com/maps/search/?api=1&query=${location.coords.latitude},${location.coords.longitude};
 
       const isAvailable = await SMS.isAvailableAsync();
       if (isAvailable) {
-        await SMS.sendSMSAsync([], `EMERGENCY! I need help. My current location is: ${mapLink}`);
+        await SMS.sendSMSAsync([], EMERGENCY! I need help. My current location is: ${mapLink});
       } else {
         Alert.alert("Error", "SMS services are not available on this device.");
       }
