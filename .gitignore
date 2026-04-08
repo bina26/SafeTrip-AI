@@ -46,3 +46,7 @@ app-example
 app.json
 
 .env
+
+.env.example
+
+
