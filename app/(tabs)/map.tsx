@@ -2,7 +2,7 @@ import * as Location from 'expo-location';
 import { StatusBar } from 'expo-status-bar';
 import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Alert, Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import MapView, { Circle, Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
+import MapView, { Callout, Circle, Marker, PROVIDER_GOOGLE, Region } from 'react-native-maps';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { getRiskZones, RiskZone } from '../../utils/ai';
 
@@ -53,12 +53,22 @@ function checkDangerZone(lat: number, lng: number, zones: RiskZone[]) {
   }
 }
 
+type NearbyPlace = {
+  id: string;
+  name: string;
+  type: 'hospital' | 'police' | 'pharmacy';
+  lat: number;
+  lng: number;
+  vicinity: string;
+};
+
 export default function MapScreen() {
   const mapRef = useRef<MapView>(null);
   const [region, setRegion] = useState<Region | null>(null);
   const [loading, setLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [riskZones, setRiskZones] = useState<RiskZone[]>([]);
+  const [nearbyServices, setNearbyServices] = useState<NearbyPlace[]>([]);
 
   const fetchLocation = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
@@ -89,6 +99,7 @@ export default function MapScreen() {
       const zones = await getRiskZones(location.coords.latitude, location.coords.longitude);
       setRiskZones(zones);
       checkDangerZone(location.coords.latitude, location.coords.longitude, zones);
+      fetchNearbyServices(location.coords.latitude, location.coords.longitude);
     } catch (error) {
       console.warn('Error fetching location:', error);
       if (!region) {
@@ -102,6 +113,37 @@ export default function MapScreen() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const fetchNearbyServices = async (lat: number, lng: number) => {
+    const apiKey = process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+    if (!apiKey) return;
+
+    const types: ('hospital' | 'police' | 'pharmacy')[] = ['hospital', 'police', 'pharmacy'];
+    let results: NearbyPlace[] = [];
+
+    for (const type of types) {
+      try {
+        const response = await fetch(
+          `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${lat},${lng}&radius=2000&type=${type}&key=${apiKey}`
+        );
+        const data = await response.json();
+        if (data.results) {
+          const topResults = data.results.slice(0, 3).map((place: any) => ({
+            id: place.place_id,
+            name: place.name,
+            type,
+            lat: place.geometry.location.lat,
+            lng: place.geometry.location.lng,
+            vicinity: place.vicinity || ''
+          }));
+          results = [...results, ...topResults];
+        }
+      } catch (e) {
+        console.warn(`Error fetching ${type}:`, e);
+      }
+    }
+    setNearbyServices(results);
   };
 
   useEffect(() => {
@@ -155,6 +197,24 @@ export default function MapScreen() {
                     strokeWidth={2}
                   />
                 </React.Fragment>
+              );
+            })}
+            {nearbyServices.map((place) => {
+              const pinColor = place.type === 'hospital' ? '#e63946' : place.type === 'police' ? '#457b9d' : '#2dc653';
+              const typeLabel = place.type.charAt(0).toUpperCase() + place.type.slice(1);
+              return (
+                <Marker
+                  key={place.id}
+                  coordinate={{ latitude: place.lat, longitude: place.lng }}
+                  pinColor={pinColor}
+                >
+                  <Callout>
+                    <View style={{ padding: 8, maxWidth: 200 }}>
+                      <Text style={{ fontSize: 13, fontWeight: 'bold' }}>{typeLabel}: {place.name}</Text>
+                      <Text style={{ fontSize: 11, color: 'gray' }}>{place.vicinity}</Text>
+                    </View>
+                  </Callout>
+                </Marker>
               );
             })}
           </>

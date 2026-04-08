@@ -23,6 +23,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import SafetyLogRecorder from '../../components/SafetyLogRecorder';
 import { getSafetyAdvice } from '../../utils/ai';
 import { getUserProfile, UserProfile } from '../../utils/storage';
+import { usePanicGesture } from '../../hooks/usePanicGesture';
 
 const { width, height } = Dimensions.get('window');
 
@@ -63,6 +64,7 @@ interface Message {
 export default function DashboardScreen() {
   const router = useRouter();
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  
   const [messages, setMessages] = useState<Message[]>([
     { role: 'ai', text: 'Welcome back! I\'m your **AI Safety Advisor**. Ask me anything about your current location or general travel safety.' }
   ]);
@@ -103,6 +105,39 @@ export default function DashboardScreen() {
 
   const sendEmergencySMS = async () => {
     try {
+      // Collect all emergency contacts from both storage keys
+      const contactSet = new Set<string>();
+
+      // 1. From onboarding's shared profile key (@safetrip_user)
+      const coreProfile = await getUserProfile();
+      if (coreProfile?.emergencyContact?.trim()) {
+        contactSet.add(coreProfile.emergencyContact.trim());
+      }
+
+      // 2. From profile screen's extended contacts[] array
+      try {
+        const AsyncStorage = (await import('@react-native-async-storage/async-storage')).default;
+        const raw = await AsyncStorage.getItem('profile');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed.contacts)) {
+            parsed.contacts.forEach((c: string) => {
+              if (c?.trim()) contactSet.add(c.trim());
+            });
+          }
+        }
+      } catch (_) {}
+
+      const contactNumbers = Array.from(contactSet);
+
+      if (contactNumbers.length === 0) {
+        Alert.alert(
+          "No Emergency Contact",
+          "Please add an emergency contact in your Profile tab first."
+        );
+        return;
+      }
+
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert("Permission Denied", "Location access is needed to send your coordinates.");
@@ -114,7 +149,7 @@ export default function DashboardScreen() {
 
       const isAvailable = await SMS.isAvailableAsync();
       if (isAvailable) {
-        await SMS.sendSMSAsync([], `EMERGENCY! I need help. My current location is: ${mapLink}`);
+        await SMS.sendSMSAsync(contactNumbers, `EMERGENCY! I need help. My current location is: ${mapLink}`);
       } else {
         Alert.alert("Error", "SMS services are not available on this device.");
       }
@@ -146,6 +181,9 @@ export default function DashboardScreen() {
     );
   };
 
+  // Initialize shake-to-SOS gesture
+  usePanicGesture(handleSOSPress);
+
   return (
     <SafeAreaView style={styles.outerContainer}>
       <StatusBar style="light" />
@@ -153,7 +191,7 @@ export default function DashboardScreen() {
       <KeyboardAvoidingView
         style={styles.keyboardContainer}
         behavior="padding"
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 80}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
       >
         <View style={styles.contentWrapper}>
           {/* Header */}
@@ -207,6 +245,10 @@ export default function DashboardScreen() {
           >
             <Text style={{ color: '#FF8C00', fontSize: Math.round(15 * width / 390), fontWeight: '600' }}>📞 Fake Call</Text>
           </TouchableOpacity>
+
+          <Text style={{ textAlign: 'center', color: COLORS.textSecondary, fontSize: 13, marginTop: 4, marginBottom: 8, fontStyle: 'italic' }}>
+            😰 Shake phone to trigger SOS
+          </Text>
 
           {/* Chat Interface Scroll Area */}
           <View style={styles.chatContainer}>

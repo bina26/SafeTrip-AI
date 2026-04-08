@@ -25,7 +25,13 @@ const emergencyNumbers = [
 const firstAidData = [
   { title: 'CPR', description: 'Call 112, 30 compressions, 2 breaths' },
   { title: 'Heavy Bleeding', description: 'Press firmly, elevate' },
-  { title: 'Burns', description: 'Cool water 20 mins, loosely cover' }
+  { title: 'Burns', description: 'Cool water 20 mins, loosely cover' },
+  { title: 'Choking', description: 'Back blows + abdominal thrusts (Heimlich). Call 112 if unconscious.' },
+  { title: 'Heart Attack', description: 'Sit down, loosen clothing, chew aspirin if available. Call 112 immediately.' },
+  { title: 'Fracture', description: 'Immobilize the area, do not straighten. Apply ice pack, seek medical help.' },
+  { title: 'Seizure', description: 'Clear area, do not restrain. Turn on side, time the seizure, call 112 if over 5 mins.' },
+  { title: 'Drowning', description: 'Remove from water, check breathing, begin CPR if not breathing. Call 112.' },
+  { title: 'Heatstroke', description: 'Move to shade, cool with wet cloth, fan them. Give water if conscious. Call 112.' }
 ];
 
 const tipsData = [
@@ -33,7 +39,15 @@ const tipsData = [
   'Keep battery > 30%',
   'Keep cash separate',
   'Memorise hotel address',
-  'Trust instincts'
+  'Trust instincts',
+  'Screenshot your passport and hotel address before traveling',
+  'Always tell someone your daily itinerary',
+  'Carry a portable charger at all times',
+  'Know the local emergency number of the country you\'re visiting',
+  'Avoid displaying expensive items in public',
+  'Use ATMs only in well-lit secure locations',
+  'Keep a physical copy of important contacts',
+  'Stay in well-populated areas especially at night'
 ];
 
 export default function OfflineScreen() {
